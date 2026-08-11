@@ -1,0 +1,35 @@
+# 脚手架核心（状态机/工单/探针/Phase0体检）仅用标准库，无需安装即可跑测试。
+# 以下为后续各模块接入时按需安装：
+
+# 客服模块实时私信：接入 cv-cat/XianYuApis 所需（其自带 requirements.txt 不全，以下为实测补全）
+# 另需系统安装 Node.js 18+（execjs 跑签名 JS）
+websockets==12.0        # 必须 <14：XianYuApis 用旧 API extra_headers，14+ 改名会报错
+blackboxprotobuf        # 同步包 protobuf 解析
+PyExecJS                # 执行逆向签名 JS（依赖 Node.js）
+pydantic                # message/types.py 用
+requests
+loguru
+qrcode                  # 扫码登录用（可选）
+
+# 推广模块配图：用系统已装的 Chrome/Edge 无头截图（无需 pip 依赖）
+#   - 渲染器自动探测 Chrome/Edge；也可在 .env 设 CHROME_PATH 指定
+#   - 不用 playwright：Python 3.14 下 playwright/greenlet 难装
+# 推广模块发帖（小红书/抖音自动上传，后续接 social-auto-upload 时再装）：
+# playwright>=1.44   # 注意：需 Python<=3.13；3.14 暂不支持
+
+# LLM：通义千问 / Claude
+# dashscope>=1.17        # 通义千问
+# anthropic>=0.39        # Claude
+
+# RAG 向量库（二选一）
+# 本地免费 Embedding（首次运行会下载 BAAI/bge-m3 模型）
+sentence-transformers>=3.0
+torch>=2.2
+# pgvector
+# pymilvus
+# 生产 PostgreSQL 适配器
+psycopg[binary]>=3.2
+
+# Web 服务 / 人工后台（Phase 1）
+# fastapi>=0.110
+# uvicorn>=0.29

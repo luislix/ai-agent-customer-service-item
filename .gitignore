@@ -1,0 +1,26 @@
+# Secrets and machine-local settings
+.env
+.DS_Store
+.idea/
+.claude/settings.local.json
+.playwright-cli/
+
+# Python and test caches
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local runtime state and generated media
+data/*.db
+data/*
+!data/item_floors.example.json
+!data/platform_profiles.example.json
+!data/product_knowledge.example.json
+!data/product_rag_eval.test.jsonl
+!data/product_snapshots.test.jsonl
+xianyu_product_crawler/out/
+
+# Vendored third-party repository is maintained separately.
+vendor/

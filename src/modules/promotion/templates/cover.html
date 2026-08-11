@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+
+  :root{
+    --paper:#F6EFE1; --paper2:#EFE5D2; --ink:#2A2521; --ink-soft:#6B5F52;
+    --red:#D8432C; --red-deep:#B5331F; --mustard:#E59A2B; --line:#D8CBB3;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#999}
+  .card{
+    position:relative; width:1080px; height:1440px; overflow:hidden;
+    background:
+      radial-gradient(900px 700px at 80% -10%, rgba(229,154,43,.18), transparent 60%),
+      radial-gradient(800px 800px at -10% 110%, rgba(216,67,44,.12), transparent 60%),
+      linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
+    font-family:'Noto Sans SC',"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);
+    padding:74px 84px 70px;
+    display:flex; flex-direction:column;
+  }
+  /* 纸纹颗粒 */
+  .card::after{
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.05;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  /* 顶部品类标签 + 序号 */
+  .top{display:flex; align-items:center; justify-content:space-between; z-index:2}
+  .kicker{
+    font-weight:700; font-size:30px; letter-spacing:.18em; color:var(--red-deep);
+    border:2.5px solid var(--red); border-radius:999px; padding:12px 30px;
+    background:rgba(255,255,255,.35);
+  }
+  .index{font-family:'Noto Serif SC',serif; font-weight:900; font-size:34px; color:var(--ink-soft)}
+  .index b{color:var(--red); font-size:46px}
+
+  /* 大标题 */
+  .title{
+    font-family:'Noto Serif SC',serif; font-weight:900; font-size:88px; line-height:1.16;
+    letter-spacing:.01em; margin-top:36px; z-index:2;
+  }
+  .title .hl{
+    background:linear-gradient(transparent 58%, rgba(229,154,43,.65) 58% 92%, transparent 92%);
+    padding:0 6px; border-radius:2px;
+  }
+  .title .red{color:var(--red)}
+  .subtitle{
+    margin-top:22px; font-size:36px; font-weight:500; color:var(--ink-soft);
+    line-height:1.45; z-index:2;
+  }
+
+  /* 商品图位 */
+  .photo-wrap{position:relative; margin:40px auto 0; z-index:2}
+  .photo{
+    width:460px; height:460px; border-radius:24px; background:
+      {{photo_bg}};
+    background-size:cover; background-position:center;
+    box-shadow:0 26px 50px rgba(42,37,33,.22); transform:rotate(-2.2deg);
+    border:12px solid #fff; outline:1px solid var(--line);
+  }
+  /* 胶带 */
+  .tape{position:absolute; width:170px; height:54px; background:rgba(229,154,43,.55);
+    top:-24px; left:50%; transform:translateX(-50%) rotate(-3deg);
+    box-shadow:0 4px 10px rgba(0,0,0,.08);
+    mask:linear-gradient(90deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)}
+  /* 价签贴纸 */
+  .price{
+    position:absolute; right:-30px; bottom:-26px; transform:rotate(7deg);
+    background:var(--red); color:#fff; border-radius:18px; padding:22px 30px 26px;
+    box-shadow:0 16px 30px rgba(181,51,31,.4); text-align:center;
+    border:3px dashed rgba(255,255,255,.6);
+  }
+  .price .lab{font-size:24px; font-weight:500; letter-spacing:.1em; opacity:.9}
+  .price .num{font-family:'Noto Serif SC',serif; font-weight:900; font-size:80px; line-height:1}
+  .price .num small{font-size:38px; margin-right:4px}
+
+  /* 卖点 */
+  .points{margin-top:auto; z-index:2; display:flex; flex-direction:column; gap:20px}
+  .pt{display:flex; align-items:center; gap:20px; font-size:36px; font-weight:500}
+  .pt .dot{flex:none; width:44px; height:44px; border-radius:50%; background:var(--red);
+    color:#fff; font-size:26px; display:grid; place-items:center; font-weight:900;
+    box-shadow:0 6px 14px rgba(216,67,44,.35)}
+
+  /* 底栏 */
+  .foot{display:flex; align-items:center; justify-content:space-between;
+    margin-top:34px; padding-top:24px; border-top:3px dashed var(--line);
+    font-size:28px; color:var(--ink-soft); z-index:2}
+  .foot .brand{font-weight:700; color:var(--ink)}
+  .foot .brand i{color:var(--red); font-style:normal}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="top">
+      <span class="kicker">{{kicker}}</span>
+      <span class="index">NO.<b>{{index}}</b></span>
+    </div>
+
+    <h1 class="title">{{title_html}}</h1>
+    <p class="subtitle">{{subtitle}}</p>
+
+    <div class="photo-wrap">
+      <div class="tape"></div>
+      <div class="photo"></div>
+      <div class="price"><div class="lab">到手价</div><div class="num"><small>¥</small>{{price}}</div></div>
+    </div>
+
+    <div class="points">{{points_html}}</div>
+
+    <div class="foot">
+      <span class="brand"><i>●</i> {{handle}}</span>
+      <span>{{footer_note}}</span>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "products": [
+    {
+      "item_id": "A1",
+      "title": "手机支架",
+      "specs": {"夹持桌厚": "1-6cm", "颜色": ["黑色", "白色"]},
+      "condition": "全新",
+      "inventory": "黑色还有 8 个，白色暂时缺货",
+      "price": "标价 39 元，最低 35 元（以 item_floors.json 为准）",
+      "shipping": "付款后 24 小时内发出，默认中通",
+      "after_sale": "签收后 7 天内有质量问题可联系售后",
+      "faq": [
+        {"question": "能夹多厚的桌子？", "answer": "支持约 1-6cm 厚的桌面。"}
+      ]
+    }
+  ]
+}

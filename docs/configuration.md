@@ -1,0 +1,63 @@
+# 配置参考
+
+复制 `.env.example` 为 `.env` 后修改。配置加载顺序是：已有系统环境变量优先，其次是项目根目录 `.env`，最后使用代码默认值。`.env` 含凭证，已被 `.gitignore` 排除。
+
+## 通用和运行时
+
+| 变量 | 默认值 | 作用 |
+|---|---|---|
+| `DB_PATH` | `data/app.db` | 工单、选品清单和本地状态的 SQLite 路径 |
+| `HEALTH_FAIL_THRESHOLD` | `3` | 连续探针失败多少次后切 `MANUAL` |
+| `ALERT_WEBHOOK` | 空 | 飞书/钉钉/企微告警 webhook；为空则只打印 |
+
+## 闲鱼客服
+
+| 变量 | 默认值 | 作用 |
+|---|---|---|
+| `XIANYU_COOKIE` | 空 | 闲鱼网页端登录 Cookie；实时模式必填 |
+| `XIANYU_USER_ID` | 空 | 闲鱼用户标识，按外部库要求填写 |
+| `XIANYU_APIS_PATH` | 自动查找 | 外部 `XianYuApis` 目录；默认查 `vendor/XianYuApis` 或项目同级目录 |
+| `REPLY_DELAY_MIN` | `3` | 自动回复最小延迟（秒） |
+| `REPLY_DELAY_MAX` | `12` | 自动回复最大延迟（秒） |
+
+## 选品和推广
+
+| 变量 | 默认值 | 作用 |
+|---|---|---|
+| `SOURCING_PROVIDER` | `onebound` | `onebound` 或 `justoneapi` |
+| `ONEBOUND_API_KEY` / `ONEBOUND_API_SECRET` | 空 | Onebound 凭证 |
+| `JUSTONEAPI_TOKEN` | 空 | justoneapi token |
+| `JUSTONEAPI_BASE` | `http://47.117.133.51:30015` | justoneapi 接口地址 |
+| `SOURCING_KEYWORDS` | `手机支架,宠物玩具,厨房收纳` | 每日任务关键词，逗号分隔 |
+| `SOURCING_RUN_HOUR` | `9` | 每日任务运行小时（0-23） |
+| `OVERSEAS_PLATFORMS` | `tiktok_us,aliexpress` | 默认跨境渠道 |
+| `XHS_COOKIE` / `DOUYIN_COOKIE` | 空 | 后续推广平台接入凭证 |
+
+平台佣金、汇率、物流和代发参数通过本地 `data/platform_profiles.json` 覆盖；模板是 `data/platform_profiles.example.json`。该配置属于运营校准数据，不应把真实账号或敏感信息写入模板。
+
+## LLM
+
+| 变量 | 默认值 | 作用 |
+|---|---|---|
+| `LLM_PROVIDER` | `qwen` | `qwen`、`deepseek` 或本地占位实现 |
+| `DASHSCOPE_API_KEY` / `QWEN_MODEL` | 空 / `qwen-plus` | 通义千问兼容接口凭证和模型 |
+| `QWEN_ENDPOINT` | DashScope 兼容地址 | 通义千问接口地址 |
+| `DEEPSEEK_API_KEY` / `DEEPSEEK_MODEL` | 空 / `deepseek-v4-flash` | DeepSeek 凭证和模型 |
+| `DEEPSEEK_ENDPOINT` | `https://api.deepseek.com/chat/completions` | DeepSeek 接口地址 |
+| `ANTHROPIC_API_KEY` | 空 | 保留的 Claude 凭证入口 |
+
+缺少真实 LLM 凭证时，脚本会使用占位实现或安全降级，不能据此判断线上回答质量。
+
+## 商品 RAG
+
+| 变量 | 默认值 | 作用 |
+|---|---|---|
+| `RAG_ENABLED` | `false` | 是否启用生产 RAG 装配 |
+| `RAG_DATABASE_URL` | 空 | PostgreSQL + pgvector 连接串 |
+| `RAG_EMBEDDING_MODEL_PATH` | `BAAI/bge-m3` | 本地 Embedding 模型 |
+| `RAG_EMBEDDING_DEVICE` | `auto` | `auto`、`cpu` 或 GPU 设备 |
+| `RAG_EMBEDDING_BATCH_SIZE` | `16` | Embedding 批大小 |
+| `RAG_TOP_K` | `5` | 默认召回条数 |
+| `RAG_MIN_SCORE` | `0.50` | 低于该分数视为未命中 |
+
+RAG 导入前可使用 `--validate-only` 和 `--preview`，不连接数据库也不下载模型。首次使用 `sentence-transformers` 时会下载本地模型；切换模型后需要使用 `--reindex` 重建向量。

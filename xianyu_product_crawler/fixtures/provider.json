@@ -1,0 +1,42 @@
+{
+  "search": {
+    "手机": [
+      {"item_id": "A1", "source_url": "https://www.goofish.com/item?id=A1"},
+      {"item_id": "B2", "source_url": "https://www.goofish.com/item?id=B2"},
+      {"item_id": "A1", "source_url": "https://www.goofish.com/item?id=A1"}
+    ],
+    "耳机": [
+      {"item_id": "B2", "source_url": "https://www.goofish.com/item?id=B2"},
+      {"item_id": "C3", "source_url": "https://www.goofish.com/item?id=C3"}
+    ]
+  },
+  "details": {
+    "A1": {
+      "source_url": "https://www.goofish.com/item?id=A1",
+      "payload": {
+        "title": "测试手机 128G",
+        "description": "页面明确描述：国行，屏幕无明显划痕。",
+        "specs": {"容量": "128GB", "颜色": "午夜黑"},
+        "condition": "95新",
+        "inventory": {"status": "in_stock", "quantity": 1},
+        "price": {"sale_price": "2999", "currency": "CNY"},
+        "shipping": {"free_shipping": true, "fee": "0"},
+        "after_sale": "签收后48小时内反馈问题",
+        "faq": [{"question": "有没有划痕？", "answer": "屏幕无明显划痕"}]
+      }
+    },
+    "B2": {
+      "source_url": "https://www.goofish.com/item?id=B2",
+      "payload": {
+        "title": "测试耳机 面议",
+        "description": "页面未提供完整规格。",
+        "condition": "成色以实物为准",
+        "price": {"sale_price": "面议"}
+      }
+    },
+    "C3": {
+      "source_url": "https://www.goofish.com/item?id=C3",
+      "payload": {"title": "测试配件", "price": {"sale_price": "39.9"}}
+    }
+  }
+}

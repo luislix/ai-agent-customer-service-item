@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+  :root{
+    --paper:#F6EFE1; --paper2:#EFE5D2; --ink:#2A2521; --ink-soft:#6B5F52;
+    --red:#D8432C; --red-deep:#B5331F; --mustard:#E59A2B; --line:#D8CBB3;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#999}
+  .card{
+    position:relative; width:1080px; height:1440px; overflow:hidden;
+    background:
+      radial-gradient(900px 700px at 15% -10%, rgba(229,154,43,.16), transparent 60%),
+      linear-gradient(160deg, var(--paper) 0%, var(--paper2) 100%);
+    font-family:'Noto Sans SC',"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink); padding:96px 90px 90px; display:flex; flex-direction:column;
+  }
+  .card::after{content:""; position:absolute; inset:0; pointer-events:none; opacity:.05;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+
+  .head{z-index:2}
+  .eyebrow{font-weight:700; font-size:30px; letter-spacing:.2em; color:var(--red-deep)}
+  .h2{font-family:'Noto Serif SC',serif; font-weight:900; font-size:76px; line-height:1.2; margin-top:18px}
+  .h2 .hl{background:linear-gradient(transparent 60%, rgba(229,154,43,.6) 60% 92%, transparent 92%); padding:0 6px}
+  .rule{height:5px; width:120px; background:var(--red); border-radius:3px; margin-top:30px}
+
+  .list{margin-top:56px; display:flex; flex-direction:column; gap:40px; z-index:2}
+  .item{display:flex; gap:30px}
+  .num{flex:none; width:74px; height:74px; border-radius:20px; background:#fff;
+    border:3px solid var(--red); color:var(--red); font-family:'Noto Serif SC',serif;
+    font-weight:900; font-size:42px; display:grid; place-items:center;
+    box-shadow:0 8px 18px rgba(216,67,44,.18); transform:rotate(-3deg)}
+  .it-body .lead{font-size:44px; font-weight:900; color:var(--ink)}
+  .it-body .desc{font-size:34px; font-weight:400; color:var(--ink-soft); line-height:1.55; margin-top:10px}
+
+  .callout{margin-top:auto; z-index:2; background:rgba(255,255,255,.5);
+    border:3px solid var(--line); border-left:12px solid var(--red);
+    border-radius:18px; padding:34px 38px; font-size:36px; font-weight:500; line-height:1.5}
+  .callout b{color:var(--red-deep)}
+  .foot{display:flex; align-items:center; justify-content:space-between; margin-top:40px;
+    padding-top:28px; border-top:3px dashed var(--line); font-size:30px; color:var(--ink-soft); z-index:2}
+  .foot .brand{font-weight:700; color:var(--ink)} .foot .brand i{color:var(--red); font-style:normal}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <div class="eyebrow">{{eyebrow}}</div>
+      <h2 class="h2">{{heading_html}}</h2>
+      <div class="rule"></div>
+    </div>
+    <div class="list">{{items_html}}</div>
+    <div class="callout">{{callout_html}}</div>
+    <div class="foot">
+      <span class="brand"><i>●</i> {{handle}}</span>
+      <span>{{footer_note}}</span>
+    </div>
+  </div>
+</body>
+</html>

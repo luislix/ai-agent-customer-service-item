@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>选品运营台 · Sourcing Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F1EA; --surface:#FCFAF5; --surface2:#FFFFFF;
+  --ink:#1B1A17; --muted:#736F66; --faint:#9A958A;
+  --line:#E6E0D4; --line2:#D8D1C2;
+  --brand:#1E4D39; --brand-soft:#E7EFE9;
+  --auto:#2F7D52; --manual:#C2792A;
+  --pos:#1C7A48; --neg:#B23A2E; --accent:#BD4F2C;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --sans:'IBM Plex Sans',-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--sans); background:var(--bg); color:var(--ink);
+  font-size:14px; line-height:1.5;
+  background-image:radial-gradient(circle at 1px 1px,rgba(0,0,0,.025) 1px,transparent 0);
+  background-size:22px 22px;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:28px 24px 64px}
+
+/* ---- header ---- */
+header{display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:20px; flex-wrap:wrap}
+.brand{display:flex; align-items:baseline; gap:12px}
+.brand h1{font-size:22px; font-weight:700; letter-spacing:-.02em}
+.brand .en{font-family:var(--mono); font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:.18em}
+.brand .dot{width:7px; height:7px; border-radius:50%; background:var(--auto); display:inline-block; margin-right:2px; box-shadow:0 0 0 3px rgba(47,125,82,.18)}
+.ts{font-family:var(--mono); font-size:11px; color:var(--faint)}
+
+/* ---- module status strip ---- */
+.modules{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px}
+.mod{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:13px 15px; position:relative; overflow:hidden}
+.mod::before{content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--auto)}
+.mod.manual::before{background:var(--manual)}
+.mod .name{font-size:12px; color:var(--muted); font-weight:500}
+.mod .st{display:flex; align-items:center; gap:7px; margin-top:5px}
+.mod .st b{font-family:var(--mono); font-size:16px; font-weight:600; letter-spacing:.02em}
+.mod.auto .st b{color:var(--auto)} .mod.manual .st b{color:var(--manual)}
+.led{width:8px;height:8px;border-radius:50%;background:var(--auto)}
+.mod.manual .led{background:var(--manual); animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.mod .sub{font-family:var(--mono); font-size:11px; color:var(--faint); margin-top:3px}
+
+/* ---- toolbar ---- */
+.bar{display:flex; align-items:center; gap:14px; margin:18px 0 12px; flex-wrap:wrap}
+.tabs{display:flex; background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:3px}
+.tabs button{font-family:var(--sans); font-size:13px; color:var(--muted); background:none; border:none; padding:6px 16px; border-radius:6px; cursor:pointer; font-weight:500; transition:all .15s}
+.tabs button.on{background:var(--brand); color:#fff}
+.spacer{flex:1}
+.stat-pills{display:flex; gap:8px; font-family:var(--mono); font-size:12px}
+.pill{padding:4px 10px; border-radius:20px; border:1px solid var(--line2); color:var(--muted)}
+.pill b{color:var(--ink)}
+.pill.ok{border-color:#bcdcc8; background:#eef6f0; color:var(--pos)}
+.refresh{font-family:var(--mono); font-size:12px; color:var(--muted); background:var(--surface); border:1px solid var(--line2); border-radius:7px; padding:6px 12px; cursor:pointer; transition:all .15s}
+.refresh:hover{border-color:var(--brand); color:var(--brand)}
+
+/* ---- table ---- */
+.card{background:var(--surface2); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 24px -16px rgba(30,77,57,.18)}
+table{width:100%; border-collapse:collapse}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--faint); font-weight:600; text-align:left; padding:11px 12px; border-bottom:1px solid var(--line2); background:var(--surface); white-space:nowrap}
+thead th.num{text-align:right}
+tbody td{padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:middle}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:#FBF8F1}
+tbody tr.gone{opacity:0; transform:translateX(8px); transition:all .35s}
+td.num{font-family:var(--mono); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+.title{max-width:300px}
+.title .t{font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:300px}
+.title .id{font-family:var(--mono); font-size:11px; color:var(--faint)}
+.score{display:flex; align-items:center; gap:8px; justify-content:flex-end}
+.score .bar{width:42px; height:5px; border-radius:3px; background:var(--line2); overflow:hidden}
+.score .bar i{display:block; height:100%; background:var(--brand)}
+.score .bar i.hi{background:var(--accent)}
+.score b{font-family:var(--mono); font-weight:600; width:34px; text-align:right}
+.chip{display:inline-block; font-family:var(--mono); font-size:11px; padding:3px 9px; border-radius:6px; background:var(--brand-soft); color:var(--brand); font-weight:500; white-space:nowrap}
+.chip.cb{background:#fbeee6; color:var(--accent)}
+.pos{color:var(--pos); font-weight:600} .neg{color:var(--neg); font-weight:600}
+.ops{display:flex; gap:6px; justify-content:flex-end}
+.ops button{font-family:var(--sans); font-size:12px; font-weight:600; border:1px solid; border-radius:6px; padding:5px 11px; cursor:pointer; transition:all .13s}
+.ok-btn{border-color:#bcdcc8; background:#fff; color:var(--pos)}
+.ok-btn:hover{background:var(--pos); color:#fff; border-color:var(--pos)}
+.no-btn{border-color:#e6c9c4; background:#fff; color:var(--neg)}
+.no-btn:hover{background:var(--neg); color:#fff; border-color:var(--neg)}
+.kb-btn{border-color:#c6d7ce; background:#fff; color:var(--brand)}
+.kb-btn:hover{background:var(--brand); color:#fff; border-color:var(--brand)}
+.badge{font-family:var(--mono); font-size:11px; padding:3px 9px; border-radius:6px; font-weight:500}
+.badge.approved{background:#eef6f0; color:var(--pos)} .badge.rejected{background:#f7eceb; color:var(--neg)}
+.empty{padding:54px; text-align:center; color:var(--faint); font-family:var(--mono); font-size:13px}
+.filters{display:flex; gap:4px}
+.filters button{font-family:var(--mono); font-size:11px; color:var(--muted); background:none; border:1px solid var(--line2); padding:5px 11px; border-radius:6px; cursor:pointer}
+.filters button.on{background:var(--ink); color:#fff; border-color:var(--ink)}
+tbody tr{animation:rise .35s backwards}
+@keyframes rise{from{opacity:0; transform:translateY(5px)}to{opacity:1}}
+dialog{width:min(700px,calc(100vw - 32px)); border:1px solid var(--line2); border-radius:8px; padding:0; color:var(--ink); box-shadow:0 20px 60px rgba(0,0,0,.22)}
+dialog::backdrop{background:rgba(27,26,23,.32)}
+.dialog-body{padding:20px; display:grid; gap:12px}.dialog-body h2{font-size:18px}.dialog-body p{color:var(--muted);font-size:12px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:grid;gap:4px}.field.wide{grid-column:1/-1}.field label{font-size:12px;font-weight:600;color:var(--muted)}
+.field input,.field textarea{font:12px var(--mono);border:1px solid var(--line2);border-radius:5px;padding:8px;background:#fff;color:var(--ink);width:100%}.field textarea{min-height:66px;resize:vertical}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}.dialog-actions button{font:600 13px var(--sans);border:1px solid var(--line2);border-radius:5px;padding:7px 12px;cursor:pointer;background:#fff}.dialog-actions .submit{background:var(--brand);color:#fff;border-color:var(--brand)}
+@media(max-width:680px){.modules{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.ops{flex-wrap:wrap}.wrap{padding:18px 12px 40px}.card{overflow-x:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1><span class="dot"></span>选品运营台</h1>
+      <span class="en">Sourcing Console</span>
+    </div>
+    <span class="ts" id="ts">—</span>
+  </header>
+
+  <div class="modules" id="modules"></div>
+
+  <div class="bar">
+    <div class="tabs" id="tabs">
+      <button data-g="overseas" class="on">跨境</button>
+      <button data-g="domestic">国内</button>
+    </div>
+    <div class="filters" id="filters">
+      <button data-s="pending" class="on">待勾选</button>
+      <button data-s="approved">已通过</button>
+      <button data-s="rejected">已拒绝</button>
+      <button data-s="">全部</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="stat-pills" id="stats"></div>
+    <button class="refresh" onclick="loadAll()">↻ 刷新</button>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th class="num">评分</th>
+        <th>商品</th>
+        <th class="num">进价</th>
+        <th>推荐渠道</th>
+        <th class="num">售价</th>
+        <th class="num">净利</th>
+        <th class="num">净利率</th>
+        <th class="num">销量</th>
+        <th class="num">操作</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">暂无数据 · 跑一次 run_daily_sourcing 生成清单</div>
+  </div>
+</div>
+
+<dialog id="knowledge-dialog">
+  <form class="dialog-body" id="knowledge-form">
+    <h2>人工入库商品知识</h2>
+    <p id="draft-source">列表字段会作为基础知识入库；未填写的规格、库存、物流、售后和 FAQ 不会被客服当作事实回复。</p>
+    <div class="form-grid">
+      <div class="field wide"><label for="xianyu-item-id">闲鱼在售商品 ID</label><input id="xianyu-item-id" required maxlength="64" pattern="[A-Za-z0-9_-]+"></div>
+      <div class="field wide"><label for="description">商品描述</label><textarea id="description" maxlength="5000"></textarea></div>
+      <div class="field"><label for="category">商品类目</label><input id="category" maxlength="100"></div>
+      <div class="field"><label for="specifications">规格 JSON</label><textarea id="specifications" placeholder='{"颜色":"黑色"}'>{}</textarea></div>
+      <div class="field"><label for="included-items">配件 JSON</label><textarea id="included-items" placeholder='["支架","说明书"]'>[]</textarea></div>
+      <div class="field"><label for="inventory">库存 JSON</label><textarea id="inventory" placeholder='{"status":"in_stock","quantity":8}'>{}</textarea></div>
+      <div class="field"><label for="shipping">物流 JSON</label><textarea id="shipping" placeholder='{"dispatch_sla_hours":24,"free_shipping":true}'>{}</textarea></div>
+      <div class="field"><label for="after-sale">售后规则</label><textarea id="after-sale" maxlength="2000"></textarea></div>
+      <div class="field wide"><label for="faq">FAQ JSON</label><textarea id="faq" placeholder='[{"question":"多久发货？","answer":"24小时内发货"}]'>[]</textarea></div>
+    </div>
+    <div class="dialog-actions"><button type="button" onclick="closeKnowledgeDialog()">取消</button><button class="submit" type="submit">校验并入库</button></div>
+  </form>
+</dialog>
+
+<script>
+let group="overseas", status="pending";
+
+function esc(s){const d=document.createElement('div'); d.textContent=s; return d.innerHTML;}
+
+async function loadState(){
+  const r=await fetch('/api/state'); const d=await r.json();
+  const names={customer:'客服',sourcing:'选品',promotion:'推广'};
+  document.getElementById('modules').innerHTML=Object.entries(d.modules).map(([k,m])=>{
+    const auto=m.state==='AUTO';
+    return `<div class="mod ${auto?'auto':'manual'}">
+      <div class="name">${names[k]||k} · ${k}</div>
+      <div class="st"><span class="led"></span><b>${m.state}</b></div>
+      <div class="sub">${auto?'全自动运行中':'人工接管 · '+(m.last_reason||'已暂停')}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('ts').textContent='更新于 '+new Date().toLocaleTimeString('zh-CN')+' · 待处理工单 '+d.pending_work_orders;
+}
+
+async function loadStats(){
+  const r=await fetch('/api/stats'); const s=await r.json();
+  document.getElementById('stats').innerHTML=
+    `<span class="pill">待勾选 <b>${s.pending}</b></span>
+     <span class="pill ok">已通过 <b>${s.approved}</b></span>
+     <span class="pill">已拒绝 <b>${s.rejected}</b></span>`;
+}
+
+async function loadPicks(){
+  const q=new URLSearchParams({group}); if(status) q.set('status',status);
+  const r=await fetch('/api/picks?'+q); const list=await r.json();
+  const tb=document.getElementById('rows'), empty=document.getElementById('empty');
+  empty.style.display=list.length?'none':'block';
+  tb.innerHTML=list.map((p,i)=>{
+    const profit=p.profit>=0?`<span class="pos">¥${p.profit.toFixed(1)}</span>`:`<span class="neg">¥${p.profit.toFixed(1)}</span>`;
+    const cb=p.group==='overseas';
+    const op=p.status==='pending'
+      ? `<div class="ops"><button class="ok-btn" onclick="act(${p.id},'approve',this)">通过</button><button class="no-btn" onclick="act(${p.id},'reject',this)">拒绝</button></div>`
+      : p.status==='approved'
+        ? `<div class="ops"><span class="badge approved">已通过</span><button class="kb-btn" onclick="createKnowledgeDraft(${p.id},this)">入库</button></div>`
+        : `<span class="badge rejected">已拒绝</span>`;
+    return `<tr style="animation-delay:${i*22}ms">
+      <td class="num"><div class="score"><span class="bar"><i class="${p.score>=80?'hi':''}" style="width:${Math.min(100,p.score)}%"></i></span><b>${p.score.toFixed(0)}</b></div></td>
+      <td class="title"><div class="t" title="${esc(p.title)}">${esc(p.title)}</div><div class="id">${esc(p.keyword)} · #${p.item_id}</div></td>
+      <td class="num">¥${p.cost_price.toFixed(2)}</td>
+      <td><span class="chip ${cb?'cb':''}">${esc(p.platform)}</span></td>
+      <td class="num">${esc(p.currency)}${p.resale_local.toFixed(2)}</td>
+      <td class="num">${profit}</td>
+      <td class="num">${(p.margin*100).toFixed(0)}%</td>
+      <td class="num">${p.sales.toLocaleString()}</td>
+      <td class="num">${op}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function act(id,action,btn){
+  const tr=btn.closest('tr'); tr.classList.add('gone');
+  await fetch(`/api/picks/${id}/${action}`,{method:'POST'});
+  setTimeout(()=>{loadPicks(); loadStats();},340);
+}
+
+let knowledgeDraftId=null;
+function requestJson(text){try{return JSON.parse(text||'{}')}catch(e){throw new Error('JSON 格式不正确：'+e.message)}}
+function closeKnowledgeDialog(){document.getElementById('knowledge-dialog').close(); knowledgeDraftId=null;}
+async function createKnowledgeDraft(pickId,btn){
+  btn.disabled=true;
+  try{
+    const r=await fetch('/api/knowledge/drafts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pick_id:pickId})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.error||'创建草稿失败');
+    knowledgeDraftId=d.id;
+    document.getElementById('draft-source').textContent=`来源货源 #${d.source_item_id} · ${d.title}。列表字段会作为基础知识入库，空白资料不会被客服当作事实。`;
+    document.getElementById('knowledge-dialog').showModal();
+  }catch(e){alert(e.message)}finally{btn.disabled=false}
+}
+document.getElementById('knowledge-form').onsubmit=async e=>{
+  e.preventDefault();
+  try{
+    const payload={
+      xianyu_item_id:document.getElementById('xianyu-item-id').value.trim(),
+      description:document.getElementById('description').value.trim()||null,
+      category:document.getElementById('category').value.trim()||null,
+      specifications:requestJson(document.getElementById('specifications').value),
+      included_items:requestJson(document.getElementById('included-items').value),
+      inventory:requestJson(document.getElementById('inventory').value),
+      shipping:requestJson(document.getElementById('shipping').value),
+      after_sale:document.getElementById('after-sale').value.trim()||null,
+      faq:requestJson(document.getElementById('faq').value),
+    };
+    const r=await fetch(`/api/knowledge/drafts/${knowledgeDraftId}/publish`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await r.json(); if(!r.ok) throw new Error(d.error||'入库失败');
+    closeKnowledgeDialog(); alert(`已入库：闲鱼商品 ${d.item_id}`);
+  }catch(e){alert(e.message)}
+};
+
+function loadAll(){loadState(); loadStats(); loadPicks();}
+
+document.getElementById('tabs').onclick=e=>{
+  if(e.target.dataset.g){document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b===e.target)); group=e.target.dataset.g; loadPicks();}
+};
+document.getElementById('filters').onclick=e=>{
+  if(e.target.dataset.s!==undefined){document.querySelectorAll('#filters button').forEach(b=>b.classList.toggle('on',b===e.target)); status=e.target.dataset.s; loadPicks();}
+};
+// 支持直达链接 ?group=domestic&status=approved
+const _sp=new URLSearchParams(location.search);
+if(_sp.get('group')) group=_sp.get('group');
+if(_sp.get('status')!==null) status=_sp.get('status');
+document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.g===group));
+document.querySelectorAll('#filters button').forEach(b=>b.classList.toggle('on',b.dataset.s===status));
+loadAll();
+</script>
+</body>
+</html>

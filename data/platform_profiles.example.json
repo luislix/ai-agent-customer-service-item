@@ -1,0 +1,75 @@
+{
+  "_说明": "复制本文件为 platform_profiles.json 并按真实数据修改即生效(无需改代码)。可改字段:commission_rate(综合费率) fulfillment_rmb(物流费/件) dropship_fee_rmb(代发费/件) return_rate(退货率) sell_multiple(加价倍率) fx_to_rmb(汇率)。其余忽略。",
+  "tiktok_us": {
+    "commission_rate": 0.06,
+    "fulfillment_rmb": 25.0,
+    "dropship_fee_rmb": 3.0,
+    "return_rate": 0.05,
+    "sell_multiple": 3.5,
+    "fx_to_rmb": 6.8,
+    "_note": "佣金6%官方核实(2024-04起,全类目含服装鞋帽);物流25/代发3为估算待校准;另有退款行政费未计"
+  },
+  "tiktok_uk": {
+    "commission_rate": 0.09,
+    "fulfillment_rmb": 22.0,
+    "dropship_fee_rmb": 3.0,
+    "return_rate": 0.05,
+    "sell_multiple": 3.5,
+    "fx_to_rmb": 9.2,
+    "_note": "佣金9%标准类目核实;GBP汇率9.2为估算;物流/代发估算待校准"
+  },
+  "aliexpress": {
+    "commission_rate": 0.135,
+    "fulfillment_rmb": 20.0,
+    "dropship_fee_rmb": 3.0,
+    "return_rate": 0.04,
+    "sell_multiple": 3.0,
+    "fx_to_rmb": 6.8,
+    "_note": "佣金8%(服装鞋)+交易服务费2.5%核实+支付费~3%估,合计13.5%;物流/代发估算待校准"
+  },
+  "tmall": {
+    "commission_rate": 0.056,
+    "fulfillment_rmb": 6.0,
+    "dropship_fee_rmb": 2.0,
+    "return_rate": 0.1,
+    "sell_multiple": 1.6,
+    "fx_to_rmb": 1.0,
+    "_note": "技术服务费5%(服装)+基础软件费0.6%核实;物流/代发/退货估算"
+  },
+  "taobao": {
+    "commission_rate": 0.006,
+    "fulfillment_rmb": 6.0,
+    "dropship_fee_rmb": 2.0,
+    "return_rate": 0.1,
+    "sell_multiple": 1.6,
+    "fx_to_rmb": 1.0,
+    "_note": "基础软件费0.6%核实(2024-09起);物流/代发/退货估算"
+  },
+  "douyin": {
+    "commission_rate": 0.05,
+    "fulfillment_rmb": 6.0,
+    "dropship_fee_rmb": 2.0,
+    "return_rate": 0.12,
+    "sell_multiple": 1.6,
+    "fx_to_rmb": 1.0,
+    "_note": "服装技术服务费5%(中等置信);物流/代发/退货估算;退货率偏高(直播冲动消费)"
+  },
+  "pdd": {
+    "commission_rate": 0.006,
+    "fulfillment_rmb": 6.0,
+    "dropship_fee_rmb": 2.0,
+    "return_rate": 0.12,
+    "sell_multiple": 1.4,
+    "fx_to_rmb": 1.0,
+    "_note": "技术服务费~0.6%(未充分验证);加价空间低(走量);物流/代发/退货估算"
+  },
+  "xianyu": {
+    "commission_rate": 0.0,
+    "fulfillment_rmb": 6.0,
+    "dropship_fee_rmb": 2.0,
+    "return_rate": 0.05,
+    "sell_multiple": 1.6,
+    "fx_to_rmb": 1.0,
+    "_note": "C2C个人闲置基本免佣(未充分验证);物流/代发/退货估算"
+  }
+}

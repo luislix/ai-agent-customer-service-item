@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xianyu-product-crawler"
+version = "0.1.0"
+description = "Authorized product snapshot collector for RAG test datasets"
+requires-python = ">=3.10"
+
+[project.scripts]
+xianyu-product-crawler = "xianyu_product_crawler.cli:main"
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]

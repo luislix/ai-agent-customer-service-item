@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>商品 RAG 本地采集器</title>
+  <style>
+    body { width: 300px; margin: 0; padding: 16px; color: #17211d; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    label { display: block; margin: 12px 0 4px; font-weight: 600; }
+    input { box-sizing: border-box; width: 100%; padding: 8px; border: 1px solid #9ba7a0; border-radius: 4px; }
+    button { width: 100%; margin-top: 14px; padding: 9px; border: 0; border-radius: 4px; background: #176b4d; color: #fff; cursor: pointer; }
+    button.secondary { background: #e7ece9; color: #17211d; }
+    #status { min-height: 20px; margin-top: 10px; color: #56635c; }
+  </style>
+</head>
+<body>
+  <strong>商品 RAG 本地采集器</strong>
+  <label for="endpoint">本机接收地址</label>
+  <input id="endpoint" value="http://127.0.0.1:8765/captures">
+  <label for="token">本机采集令牌</label>
+  <input id="token" type="password" autocomplete="off">
+  <button id="save" class="secondary">保存设置</button>
+  <button id="collect">采集当前商品</button>
+  <div id="status" role="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
