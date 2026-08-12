@@ -86,6 +86,29 @@ class Orchestrator:
         store = store or SourcingPickStore(config.DB_PATH)
         return run_daily_sourcing(keywords, store, **kw)
 
+    def run_promotion_job(self, sourcing_store=None, promotion_store=None, **kw) -> dict | None:
+        """每日推广：推广模块 MANUAL 时入工单，AUTO 时生成待审核内容。"""
+        sm = self.modules["promotion"].sm
+        if not sm.is_auto:
+            reason = sm.last_reason or "人工暂停"
+            self.store.create(
+                module="promotion", action="generate_daily_content",
+                payload={"source_date": kw.get("source_date", "")}, reason=reason,
+            )
+            send_alert(
+                f"推广模块处于 MANUAL（{reason}），每日内容已转人工处理。",
+                webhook=config.ALERT_WEBHOOK,
+            )
+            return None
+        from .modules.promotion.daily_job import run_daily_promotion
+        from .modules.promotion.store import PromotionStore
+        from .modules.sourcing.store import SourcingPickStore
+        return run_daily_promotion(
+            sourcing_store or SourcingPickStore(config.DB_PATH),
+            promotion_store or PromotionStore(config.DB_PATH),
+            **kw,
+        )
+
     # ---- 人工后台用 ----
     def recover_module(self, name: str) -> bool:
         rt = self.modules.get(name)

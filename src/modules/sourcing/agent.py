@@ -116,3 +116,17 @@ def to_promo_product(pick, category: str = "好物") -> Product:
         selling_points=_extract_points(pick),
         image_path=item.pic_url if item.pic_url.startswith("http") else "",
     )
+
+
+def to_promo_product_from_snapshot(snapshot: dict) -> Product:
+    """推广只读取审核时写入的事实快照，不临时依赖选品列表或供应商接口。"""
+    title = str(snapshot["title"])
+    for noise in ("厂家直供", "批发", "走量", "现货批发"):
+        title = title.replace(noise, "")
+    return Product(
+        title=title.strip(),
+        price=float(snapshot["price"]),
+        category=str(snapshot.get("category") or "每日好物"),
+        selling_points=[str(value) for value in snapshot.get("selling_points", [])],
+        image_path=str(snapshot.get("image_path") or ""),
+    )

@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 from contextlib import closing
 from dataclasses import dataclass
@@ -29,6 +30,9 @@ class DailyPick:
     score: float
     sales: int
     detail_url: str
+    pic_url: str
+    selling_points: list[str]
+    reason: str
     status: str          # pending / approved / rejected
     created_at: str
 
@@ -64,11 +68,23 @@ class SourcingPickStore:
                     score REAL NOT NULL,
                     sales INTEGER NOT NULL DEFAULT 0,
                     detail_url TEXT DEFAULT '',
+                    pic_url TEXT NOT NULL DEFAULT '',
+                    selling_points_json TEXT NOT NULL DEFAULT '[]',
+                    reason TEXT NOT NULL DEFAULT '',
                     status TEXT NOT NULL DEFAULT 'pending',
                     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
                 )
                 """
             )
+            self._add_column(c, "pic_url", "TEXT NOT NULL DEFAULT ''")
+            self._add_column(c, "selling_points_json", "TEXT NOT NULL DEFAULT '[]'")
+            self._add_column(c, "reason", "TEXT NOT NULL DEFAULT ''")
+
+    @staticmethod
+    def _add_column(conn: sqlite3.Connection, name: str, definition: str) -> None:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(daily_picks)")}
+        if name not in columns:
+            conn.execute(f"ALTER TABLE daily_picks ADD COLUMN {name} {definition}")
 
     def save(self, run_date: str, keyword: str, group: str, pick: PlatformPick) -> int:
         """把一条选品决策落库。同 run_date+item_id+group 视为重复，跳过返回 0。"""
@@ -83,11 +99,12 @@ class SourcingPickStore:
             cur = c.execute(
                 """INSERT INTO daily_picks
                    (run_date,keyword,"group",item_id,title,cost_price,platform,currency,
-                    resale_local,profit,margin,score,sales,detail_url)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    resale_local,profit,margin,score,sales,detail_url,pic_url,selling_points_json,reason)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (run_date, keyword, group, pick.item.item_id, pick.item.title,
                  pick.item.cost_price, b.platform, b.currency, b.resale_local,
-                 b.profit, b.margin, pick.score, pick.item.sales, pick.item.detail_url),
+                 b.profit, b.margin, pick.score, pick.item.sales, pick.item.detail_url,
+                 pick.item.pic_url, json.dumps(_selling_points(pick), ensure_ascii=False), pick.reason),
             )
             return int(cur.lastrowid)
 
@@ -165,5 +182,20 @@ class SourcingPickStore:
             item_id=r["item_id"], title=r["title"], cost_price=r["cost_price"],
             platform=r["platform"], currency=r["currency"], resale_local=r["resale_local"],
             profit=r["profit"], margin=r["margin"], score=r["score"], sales=r["sales"],
-            detail_url=r["detail_url"], status=r["status"], created_at=r["created_at"],
+            detail_url=r["detail_url"], pic_url=r["pic_url"],
+            selling_points=json.loads(r["selling_points_json"] or "[]"), reason=r["reason"],
+            status=r["status"], created_at=r["created_at"],
         )
+
+
+def _selling_points(pick: PlatformPick) -> list[str]:
+    """持久化选品阶段的事实卖点，推广端无需回查供应商。"""
+    points: list[str] = []
+    if pick.item.sales >= 500:
+        points.append(f"已售{pick.item.sales}+ 热销验证")
+    for word in ("包邮", "现货", "全配件", "礼盒", "升级", "高品质", "速发"):
+        if word in pick.item.title:
+            points.append(word)
+        if len(points) >= 3:
+            break
+    return points[:3] or ["品质好物"]

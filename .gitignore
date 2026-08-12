@@ -4,6 +4,7 @@
 .idea/
 .claude/settings.local.json
 .playwright-cli/
+.xhs-browser-profile/
 
 # Python and test caches
 **/__pycache__/

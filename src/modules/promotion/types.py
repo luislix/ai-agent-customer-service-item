@@ -40,3 +40,18 @@ class PromoPost:
 
     # 发布用的小红书正文文案（标题+正文+话题标签）
     xhs_caption: str = ""
+
+
+@dataclass
+class WeChatArticle:
+    """待写入微信服务号草稿箱的图文消息。
+
+    ``content_html`` 可使用 ``{{image:N}}`` 占位符，微信客户端上传正文图片后
+    才替换成微信公众号认可的 URL。
+    """
+    title: str
+    digest: str
+    author: str
+    content_html: str
+    cover_image_path: str
+    inline_image_paths: list[str] = field(default_factory=list)

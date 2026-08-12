@@ -68,6 +68,17 @@ class TestOrchestratorStateAware(unittest.TestCase):
         self.assertIsNotNone(res)
         self.assertGreater(res["saved"], 0)
 
+    def test_promotion_manual_creates_work_order(self):
+        from src.core.work_order import WorkOrderStore
+        from src.orchestrator import Orchestrator
+        temp_db = str(Path(tempfile.mkdtemp()) / "promotion.db")
+        orch = Orchestrator(store=WorkOrderStore(temp_db))
+        orch.modules["promotion"].sm.force_manual("test_pause")
+        res = orch.run_promotion_job(source_date=_DATE)
+        self.assertIsNone(res)
+        orders = orch.store.list_pending("promotion")
+        self.assertEqual(orders[-1].action, "generate_daily_content")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,10 +1,11 @@
-"""人工后台控制台：选品审核与人工商品知识入库。
+"""人工后台控制台：选品审核、推广内容和人工商品知识入库。
 
 零依赖（标准库 http.server）。
     python -m scripts.run_console      # 打开 http://127.0.0.1:8000
 
-API：GET /api/state、/api/stats、/api/picks?group=&status=、/api/knowledge/drafts；
-POST /api/picks/{id}/approve|reject、/api/knowledge/drafts、/api/knowledge/drafts/{id}/publish。
+API：GET /api/state、/api/stats、/api/picks?group=&status=、/api/promotions、/api/knowledge/drafts；
+POST /api/picks/{id}/approve|reject、/api/promotions/{id}/xhs-prepare|xhs/published、
+/api/knowledge/drafts、/api/knowledge/drafts/{id}/publish。
 """
 from __future__ import annotations
 
@@ -24,17 +25,29 @@ from src.modules.product_rag.manual_ingestion import (  # noqa: E402
     ManualKnowledgeIngestionStore,
 )
 from src.modules.sourcing.store import SourcingPickStore  # noqa: E402
+from src.modules.promotion.publishing import prepare_xhs_browser, sync_wechat_draft  # noqa: E402
+from src.modules.promotion.store import PromotionStore  # noqa: E402
 from src.orchestrator import Orchestrator  # noqa: E402
 
 _HTML = (Path(__file__).resolve().parent.parent / "src" / "console" / "index.html").read_text(encoding="utf-8")
 _orch = Orchestrator()
 _store = SourcingPickStore(config.DB_PATH)
+_promotion_store = PromotionStore(config.DB_PATH)
 _knowledge_store = ManualKnowledgeIngestionStore(config.DB_PATH)
 
 
 def _knowledge_source_url(pick) -> str:
     """优先保留列表返回的来源链接；离线/列表缺失时指向本地选品记录。"""
     return pick.detail_url or f"https://sourcing.local/picks/{pick.id}"
+
+
+def _promotion_json(content) -> dict:
+    deliveries = {delivery.channel: delivery.__dict__ for delivery in _promotion_store.deliveries(content.id)}
+    return {
+        **content.__dict__, "deliveries": deliveries,
+        "title": content.xhs_post.get("title", ""),
+        "caption": content.xhs_post.get("xhs_caption", ""),
+    }
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -64,6 +77,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         u = urlparse(self.path)
+        if u.path == "/favicon.ico":
+            return self._send(204, b"", "image/x-icon")
         if u.path in ("/", "/index.html"):
             return self._send(200, _HTML, "text/html")
         if u.path == "/api/state":
@@ -76,6 +91,24 @@ class Handler(BaseHTTPRequestHandler):
             status = (q.get("status") or [None])[0]
             picks = _store.list_picks(status=status or None, group=group or None)
             return self._json([p.__dict__ for p in picks])
+        if u.path == "/api/promotions":
+            q = parse_qs(u.query)
+            status = (q.get("status") or [None])[0]
+            return self._json([_promotion_json(content) for content in _promotion_store.list(status or None)])
+        if len(u.path.strip("/").split("/")) == 5:
+            parts = u.path.strip("/").split("/")
+            if parts[:2] == ["api", "promotions"] and parts[3] == "assets":
+                try:
+                    content_id = int(parts[2])
+                    name = parts[4]
+                    content = _promotion_store.get(content_id)
+                    path = Path(content.asset_dir) / name if content else None
+                    if not content or Path(name).name != name or not path.is_file():
+                        return self._json({"error": "asset not found"}, 404)
+                    ctype = "application/json" if name.endswith(".json") else "text/plain" if name.endswith(".txt") else "image/png"
+                    return self._send(200, path.read_bytes(), ctype)
+                except ValueError:
+                    return self._json({"error": "bad id"}, 400)
         if u.path == "/api/knowledge/drafts":
             return self._json([draft.__dict__ for draft in _knowledge_store.list_drafts()])
         self._json({"error": "not found"}, 404)
@@ -93,6 +126,42 @@ class Handler(BaseHTTPRequestHandler):
             if action == "reject":
                 return self._json({"ok": _store.reject(pid)})
             return self._json({"error": "bad action"}, 400)
+        if len(parts) == 4 and parts[:2] == ["api", "promotions"]:
+            try:
+                content_id = int(parts[2])
+            except ValueError:
+                return self._json({"error": "bad id"}, 400)
+            action = parts[3]
+            if action == "approve":
+                if not _promotion_store.approve(content_id):
+                    return self._json({"error": "内容不存在或不在待审核状态"}, 409)
+                try:
+                    media_id = sync_wechat_draft(_promotion_store, content_id)
+                except Exception as exc:  # noqa: BLE001
+                    return self._json({"ok": True, "wechat_error": str(exc)})
+                return self._json({"ok": True, "wechat_media_id": media_id})
+            if action == "reject":
+                return self._json({"ok": _promotion_store.reject(content_id)})
+            if action == "xhs-prepare":
+                try:
+                    prepare_xhs_browser(_promotion_store, content_id)
+                    return self._json({"ok": True, "status": "awaiting_manual_publish"})
+                except (RuntimeError, ValueError) as exc:
+                    return self._json({"error": str(exc)}, 422)
+            return self._json({"error": "bad action"}, 400)
+        if len(parts) == 5 and parts[:2] == ["api", "promotions"]:
+            try:
+                content_id = int(parts[2])
+            except ValueError:
+                return self._json({"error": "bad id"}, 400)
+            if parts[3:] == ["wechat", "retry"]:
+                try:
+                    media_id = sync_wechat_draft(_promotion_store, content_id)
+                    return self._json({"ok": True, "wechat_media_id": media_id})
+                except (RuntimeError, ValueError) as exc:
+                    return self._json({"error": str(exc)}, 422)
+            if parts[3:] == ["xhs", "published"]:
+                return self._json({"ok": _promotion_store.mark_xhs_published(content_id)})
         if parts == ["api", "knowledge", "drafts"]:
             try:
                 payload = self._body()

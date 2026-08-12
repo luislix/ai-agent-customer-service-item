@@ -93,6 +93,9 @@ td.num{font-family:var(--mono); text-align:right; font-variant-numeric:tabular-n
 .kb-btn:hover{background:var(--brand); color:#fff; border-color:var(--brand)}
 .badge{font-family:var(--mono); font-size:11px; padding:3px 9px; border-radius:6px; font-weight:500}
 .badge.approved{background:#eef6f0; color:var(--pos)} .badge.rejected{background:#f7eceb; color:var(--neg)}
+.badge.pending{background:#fff7e8; color:var(--manual)} .badge.failed{background:#f7eceb; color:var(--neg)}
+.promo{margin-top:24px}.promo h2{font-size:17px;margin-bottom:10px}.promo .card{overflow-x:auto}
+.link-btn{border-color:#c6d7ce;background:#fff;color:var(--brand)} .link-btn:hover{background:var(--brand);color:#fff}
 .empty{padding:54px; text-align:center; color:var(--faint); font-family:var(--mono); font-size:13px}
 .filters{display:flex; gap:4px}
 .filters button{font-family:var(--mono); font-size:11px; color:var(--muted); background:none; border:1px solid var(--line2); padding:5px 11px; border-radius:6px; cursor:pointer}
@@ -153,6 +156,17 @@ dialog::backdrop{background:rgba(27,26,23,.32)}
     </table>
     <div class="empty" id="empty" style="display:none">暂无数据 · 跑一次 run_daily_sourcing 生成清单</div>
   </div>
+
+  <section class="promo">
+    <h2>每日推广内容</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>日期</th><th>商品</th><th>状态</th><th>微信</th><th>小红书</th><th class="num">操作</th></tr></thead>
+        <tbody id="promo-rows"></tbody>
+      </table>
+      <div class="empty" id="promo-empty">暂无内容 · 10:00 自动读取前一天已审核选品</div>
+    </div>
+  </section>
 </div>
 
 <dialog id="knowledge-dialog">
@@ -267,7 +281,40 @@ document.getElementById('knowledge-form').onsubmit=async e=>{
   }catch(e){alert(e.message)}
 };
 
-function loadAll(){loadState(); loadStats(); loadPicks();}
+function deliveryLabel(d){
+  if(!d) return '<span class="badge pending">待处理</span>';
+  const cls=d.status==='failed'?'failed':d.status==='package_ready'||d.status==='awaiting_manual_publish'||d.status==='draft_created'||d.status==='published'?'approved':'pending';
+  const names={pending:'待同步',package_ready:'发布包就绪',awaiting_manual_publish:'待人工点击发布',draft_created:'草稿已创建',published:'已发布',failed:'失败'};
+  const external=d.status==='draft_created'&&d.external_id?`<div class="id">${esc(d.external_id)}</div>`:'';
+  return `<span class="badge ${cls}">${names[d.status]||esc(d.status)}</span>${external}`;
+}
+async function loadPromotions(){
+  const r=await fetch('/api/promotions'); const list=await r.json();
+  const empty=document.getElementById('promo-empty'), rows=document.getElementById('promo-rows');
+  empty.style.display=list.length?'none':'block';
+  rows.innerHTML=list.map(p=>{
+    const wechat=p.deliveries&&p.deliveries.wechat, xhs=p.deliveries&&p.deliveries.xhs;
+    let ops='';
+    if(p.status==='pending_review') ops='<button class="ok-btn" onclick="promoAct('+p.id+',\'approve\')">审核通过</button><button class="no-btn" onclick="promoAct('+p.id+',\'reject\')">拒绝</button>';
+    if(p.status==='approved' && (!wechat || wechat.status==='pending' || wechat.status==='failed')) ops+='<button class="link-btn" onclick="promoAct('+p.id+',\'retry-wechat\')">重试微信</button>';
+    if(xhs && (xhs.status==='package_ready'||xhs.status==='failed')) ops+='<button class="link-btn" onclick="promoAct('+p.id+',\'xhs-prepare\')">自动填充小红书</button>';
+    if(xhs && xhs.status==='awaiting_manual_publish') ops+='<button class="link-btn" onclick="promoAct('+p.id+',\'xhs-published\')">标记小红书已发布</button>';
+    const asset=(name,label)=>p.asset_dir?`<a class="link-btn" href="/api/promotions/${p.id}/assets/${name}" download>${label}</a>`:'';
+    if(p.asset_dir) ops+=`<button class="link-btn" onclick="copyCaption(${p.id})">复制正文</button><a class="link-btn" href="https://creator.xiaohongshu.com/" target="_blank" rel="noopener">打开小红书</a>`+asset('cover.png','封面')+asset('content.png','内容卡')+asset('caption.txt','正文');
+    return `<tr><td class="num">${esc(p.content_date)}</td><td class="title"><div class="t" title="${esc(p.title)}">${esc(p.title)}</div><div class="id">选品 #${p.source_pick_id}</div></td><td>${esc(p.status)}</td><td>${deliveryLabel(wechat)}</td><td>${deliveryLabel(xhs)}</td><td class="num"><div class="ops">${ops}</div></td></tr>`;
+  }).join('');
+}
+async function copyCaption(id){
+  const r=await fetch(`/api/promotions/${id}/assets/caption.txt`); const text=await r.text();
+  try{await navigator.clipboard.writeText(text); alert('正文已复制');}catch(e){alert(text);}
+}
+async function promoAct(id,action){
+  const path=action==='retry-wechat'?`/api/promotions/${id}/wechat/retry`:action==='xhs-published'?`/api/promotions/${id}/xhs/published`:`/api/promotions/${id}/${action}`;
+  const r=await fetch(path,{method:'POST'}); const d=await r.json();
+  if(!r.ok) alert(d.error||'操作失败');
+  await loadPromotions();
+}
+function loadAll(){loadState(); loadStats(); loadPicks(); loadPromotions();}
 
 document.getElementById('tabs').onclick=e=>{
   if(e.target.dataset.g){document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b===e.target)); group=e.target.dataset.g; loadPicks();}

@@ -1,7 +1,7 @@
-"""选品定时守护进程（纯标准库，零依赖，跨平台）。
+"""选品 + 推广定时守护进程（纯标准库，零依赖，跨平台）。
 
-每天到 SOURCING_RUN_HOUR 点自动跑一次每日选品（经 Orchestrator，模块 MANUAL 时跳过）。
-进程常驻，每 60 秒检查一次；用"上次运行日期"去重，一天只跑一次、重启不漏不重。
+每天到 SOURCING_RUN_HOUR 跑选品，到 PROMOTION_RUN_HOUR 用前一天已审核选品生成推广内容。
+SQLite 持久化调度锁保证进程重启后不会重复执行当天任务。
 
     python -m scripts.run_scheduler
 
@@ -24,7 +24,7 @@ except Exception:  # noqa: BLE001
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import config  # noqa: E402
-from src.core.scheduler import should_run  # noqa: E402
+from src.core.schedule_store import ScheduleRunStore  # noqa: E402
 from src.modules.sourcing.store import SourcingPickStore  # noqa: E402
 from src.orchestrator import Orchestrator  # noqa: E402
 
@@ -41,28 +41,52 @@ def _run_once(orch: Orchestrator, keywords: list[str]) -> None:
           f"当日待勾选 {pend} 条")
 
 
+def _run_promotion_once(orch: Orchestrator) -> None:
+    summary = orch.run_promotion_job()
+    if summary is None:
+        print(f"[{_now()}] 推广模块 MANUAL，已转人工工单")
+        return
+    if summary["saved"]:
+        print(f"[{_now()}] 推广内容已生成 #{summary['content_id']}，等待人工审核")
+    else:
+        print(f"[{_now()}] 推广未生成：{summary['reason']}")
+
+
 def _now() -> str:
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
 
 def main() -> int:
     keywords = [x.strip() for x in (config.SOURCING_KEYWORDS or "").split(",") if x.strip()]
-    run_hour = config.SOURCING_RUN_HOUR
     if not keywords:
         print("没有关键词（设 SOURCING_KEYWORDS）")
         return 1
 
     orch = Orchestrator()
-    last_run_date: str | None = None
-    print(f"[{_now()}] 选品守护进程启动：每天 {run_hour:02d}:00 跑 {keywords}（每 {_POLL_SECONDS}s 检查）")
+    run_store = ScheduleRunStore(config.DB_PATH)
+    print(
+        f"[{_now()}] 守护进程启动：{config.SOURCING_RUN_HOUR:02d}:00 选品 {keywords}；"
+        f"{config.PROMOTION_RUN_HOUR:02d}:00 生成前日已审核推广内容（每 {_POLL_SECONDS}s 检查）"
+    )
     while True:
         now = datetime.datetime.now()
-        if should_run(now, run_hour, last_run_date):
+        today = now.date().isoformat()
+        if now.hour >= config.SOURCING_RUN_HOUR and run_store.start("sourcing", today):
             try:
                 _run_once(orch, keywords)
             except Exception as e:  # noqa: BLE001 守护进程不因单次异常退出
-                print(f"[{_now()}] 选品异常（忽略，明天再试）：{e}")
-            last_run_date = now.date().isoformat()
+                run_store.fail("sourcing", today)
+                print(f"[{_now()}] 选品异常，已记录失败：{e}")
+            else:
+                run_store.complete("sourcing", today)
+        if now.hour >= config.PROMOTION_RUN_HOUR and run_store.start("promotion", today):
+            try:
+                _run_promotion_once(orch)
+            except Exception as e:  # noqa: BLE001
+                run_store.fail("promotion", today)
+                print(f"[{_now()}] 推广异常，已记录失败：{e}")
+            else:
+                run_store.complete("promotion", today)
         time.sleep(_POLL_SECONDS)
 
 

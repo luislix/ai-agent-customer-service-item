@@ -68,6 +68,10 @@ class Config:
     # ---- 推广模块（小红书 / 抖音）----
     XHS_COOKIE = get("XHS_COOKIE")
     DOUYIN_COOKIE = get("DOUYIN_COOKIE")
+    PROMOTION_RUN_HOUR = int(get("PROMOTION_RUN_HOUR", "10"))
+    PROMOTION_TIMEZONE = get("PROMOTION_TIMEZONE", "Asia/Shanghai")
+    WECHAT_APP_ID = get("WECHAT_APP_ID")
+    WECHAT_APP_SECRET = get("WECHAT_APP_SECRET")
 
     # ---- LLM ----
     LLM_PROVIDER = get("LLM_PROVIDER", "qwen")   # qwen / deepseek / local
